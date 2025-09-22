@@ -1,6 +1,8 @@
 #ifndef MINISHELL_H
 # define MINISHELL_H
 
+# include "libft.h"
+# include <errno.h>
 # include <fcntl.h>
 # include <readline/history.h>
 # include <readline/readline.h>
@@ -65,5 +67,12 @@ typedef struct s_shell
 	int interactive; // 対話モードか
 						// 必要なら: sigフラグや一時fdの退避など
 }							t_shell;
+
+int							exec_entry(t_ast *root, t_shell *sh);
+int							run_single_command(t_cmd *cmd, t_shell *sh);
+int							apply_redirs(const t_cmd *cmd);
+void						exec_external(char *const argv[],
+								char *const envp[]);
+char						*find_cmd_path(const char *cmd, char *const *envp);
 
 #endif
