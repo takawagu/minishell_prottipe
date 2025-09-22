@@ -26,7 +26,19 @@ static char	*try_paths(char **paths, const char *cmd)
 	return (NULL);
 }
 
-char	*find_cmd_path(const char *cmd, char **envp)
+static void	free_split(char **arr)
+{
+	int	i;
+
+	i = 0;
+	if (!arr)
+		return ;
+	while (arr[i])
+		free(arr[i++]);
+	free(arr);
+}
+
+char	*find_cmd_path(const char *cmd, char *const *envp)
 {
 	int		i;
 	char	*path_env;
