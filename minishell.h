@@ -76,5 +76,7 @@ int							apply_redirs(const t_cmd *cmd);
 void						exec_external(char *const argv[],
 								char *const envp[]);
 char						*find_cmd_path(const char *cmd, char *const *envp);
+// int							prepare_heredocs_for_cmd(t_shell *sh,
+// t_cmd *cmd);
 
 #endif

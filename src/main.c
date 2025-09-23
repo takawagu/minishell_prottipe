@@ -63,6 +63,45 @@ static inline t_redir	*push_redir(t_redir **head, t_rtype kind,
 	return (push_redir_ex(head, kind, arg, -1));
 }
 
+static t_redir	*push_redir_hdoc(t_redir **head, const char *limiter,
+		int quoted)
+{
+	t_redir	*r;
+	t_redir	*t;
+
+	r = calloc(1, sizeof(*r));
+	if (!r)
+		return (NULL);
+	r->kind = R_HDOC;
+	r->arg = limiter ? strdup(limiter) : strdup("");
+	r->quoted = quoted;
+	r->fd_target = -1; // 省略→STDIN
+	r->hdoc_fd = -1;   // prepare_heredocs_for_cmd で埋まる
+	r->next = NULL;
+	if (!*head)
+		*head = r;
+	else
+	{
+		t = *head;
+		while (t->next)
+			t = t->next;
+		t->next = r;
+	}
+	return (r);
+}
+
+// fd_target を明示する版（例: 0<<LIM）
+static t_redir	*push_redir_hdoc_ex(t_redir **head, const char *limiter,
+		int quoted, int fd_target)
+{
+	t_redir	*r;
+
+	r = push_redir_hdoc(head, limiter, quoted);
+	if (r)
+		r->fd_target = fd_target;
+	return (r);
+}
+
 static void	free_redirs(t_redir *r)
 {
 	t_redir	*n;
@@ -166,6 +205,76 @@ static void	build_case5_multi_redirs(t_ast *out_ast)
 	// 2> err.txt    → fd 2
 }
 
+static void	build_case6_hdoc_basic(t_ast *out_ast)
+{
+	memset(out_ast, 0, sizeof(*out_ast));
+	out_ast->type = AST_CMD;
+	out_ast->as.cmd.argv = make_argv(2, "/bin/cat", NULL, NULL, NULL, NULL);
+	out_ast->as.cmd.is_builtin = 0;
+	out_ast->as.cmd.redirs = NULL;
+	push_redir_hdoc(&out_ast->as.cmd.redirs, "EOF", /*quoted=*/0);
+	push_redir(&out_ast->as.cmd.redirs, R_OUT, "out.txt");
+	// 入力例:
+	//   hello
+	//   world
+	//   EOF
+	// 期待: out.txt に "hello\nworld\n"
+}
+
+// 7) heredoc の後勝ち: wc -l <<AAA <<BBB
+static void	build_case7_hdoc_last_wins(t_ast *out_ast)
+{
+	memset(out_ast, 0, sizeof(*out_ast));
+	out_ast->type = AST_CMD;
+	out_ast->as.cmd.argv = make_argv(3, "/bin/wc", "-l", NULL, NULL, NULL);
+	out_ast->as.cmd.is_builtin = 0;
+	out_ast->as.cmd.redirs = NULL;
+	push_redir_hdoc(&out_ast->as.cmd.redirs, "AAA", 0);
+	push_redir_hdoc(&out_ast->as.cmd.redirs, "BBB", 0);
+	// BBB の内容だけが有効
+	// 入力例:
+	//  (AAA ブロック; 実際は無視される) AAA
+	//  a
+	//  b
+	//  c
+	//  BBB
+	// 期待: "3\n"
+}
+
+// 8) quoted/unquoted の差（展開方針テスト用）: cat <<EOF / <<'EOF'
+static void	build_case8_hdoc_quoted_vs_unquoted(t_ast *out_ast, int quoted)
+{
+	memset(out_ast, 0, sizeof(*out_ast));
+	out_ast->type = AST_CMD;
+	out_ast->as.cmd.argv = make_argv(2, "/bin/cat", NULL, NULL, NULL, NULL);
+	out_ast->as.cmd.is_builtin = 0;
+	out_ast->as.cmd.redirs = NULL;
+	push_redir_hdoc(&out_ast->as.cmd.redirs, "EOF", quoted);
+	// 入力例:
+	//  hello $USER
+	//  EOF
+	// 期待:
+	//  quoted==0 → 展開あり想定: "hello <user>\n"
+	//  quoted==1 → 展開なし想定: "hello $USER\n"
+}
+
+// 9) 明示 fd_target: 0<<LIM と 2> err.txt 併用
+static void	build_case9_hdoc_target0_and_stderr(t_ast *out_ast)
+{
+	memset(out_ast, 0, sizeof(*out_ast));
+	out_ast->type = AST_CMD;
+	out_ast->as.cmd.argv = make_argv(2, "/bin/cat", NULL, NULL, NULL, NULL);
+	out_ast->as.cmd.is_builtin = 0;
+	out_ast->as.cmd.redirs = NULL;
+	push_redir_hdoc_ex(&out_ast->as.cmd.redirs, "LIM", 0, /*fd_target=*/0);
+	push_redir_ex(&out_ast->as.cmd.redirs, R_OUT, "err.txt", /*fd_target=*/2);
+	// 入力例:
+	//  X
+	//  Y
+	//  LIM
+	// 期待: STDOUT に "X\nY\n"、err.txt（通常は空）
+}
+
 // ---- main -------------------------------------------------------------
 
 int	main(int argc, char **argv, char **envp)
@@ -201,15 +310,35 @@ int	main(int argc, char **argv, char **envp)
 	case 5: // 複数リダイレクト（後勝ち）
 		build_case5_multi_redirs(&ast);
 		break ;
+	case 6:
+		build_case6_hdoc_basic(&ast);
+		break ;
+	case 7:
+		build_case7_hdoc_last_wins(&ast);
+		break ;
+	case 8:
+		build_case8_hdoc_quoted_vs_unquoted(&ast, /*quoted=*/0);
+		break ; // unquoted
+	case 9:
+		build_case8_hdoc_quoted_vs_unquoted(&ast, /*quoted=*/1);
+		break ; // quoted
+	case 10:
+		build_case9_hdoc_target0_and_stderr(&ast);
+		break ;
 	default:
-		fprintf(stderr, "usage: %s [1|2|3|4|5]\n", argv[0]);
+		fprintf(stderr, "usage: %s [1..10]\n", argv[0]);
 		fprintf(stderr, "  1: grep b < infile > outfile\n");
 		fprintf(stderr, "  2: /bin/ls -l\n");
 		fprintf(stderr, "  3: echo -n hello > out.txt\n");
 		fprintf(stderr,
 			"  4: grep b NO_SUCH_FILE < infile > out.txt 2>> err.txt\n");
 		fprintf(stderr,
-			"  5: echo-n hello > first.txt > second.txt 2> err.txt\n");
+			"  5:/bin/echo-n hello > first.txt > second.txt 2> err.txt\n");
+		fprintf(stderr, "  6: /bin/cat <<EOF > out.txt\n");
+		fprintf(stderr, "  7: /bin/wc -l <<AAA <<BBB  (後勝ち)\n");
+		fprintf(stderr, "  8: /bin/cat <<EOF  (unquoted)\n");
+		fprintf(stderr, "  9: /bin/cat <<'EOF' (quoted)\n");
+		fprintf(stderr, " 10: 0<<LIM /bin/cat  2> err.txt\n");
 		return (2);
 	}
 	status = run_single_command(&ast.as.cmd, &sh);

@@ -8,6 +8,11 @@ int	run_single_command(t_cmd *cmd, t_shell *sh)
 		return (1);
 	if (cmd->is_builtin)
 		return (1);
+	// if (prepare_heredocs_for_cmd(sh, cmd) < 0)
+	// {
+	// 	// Ctrl-C などで中断された場合はここで終了
+	// 	return (1);
+	// }
 	pid = fork();
 	if (pid == 0)
 	{
