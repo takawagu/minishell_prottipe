@@ -33,6 +33,8 @@ typedef struct s_redir
 	t_rtype					kind;
 	char *arg;  // filename or heredoc limiter（展開後/前の方針は後述）
 	int quoted; // heredoc limiter がクォートされていたか（展開抑制用）
+	int						fd_target;
+	int						hdoc_fd;
 	struct s_redir			*next;
 }							t_redir;
 

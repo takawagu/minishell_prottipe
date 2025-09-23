@@ -13,71 +13,86 @@ int	run_single_command(t_cmd *cmd, t_shell *sh)
 	{
 		if (apply_redirs(cmd) < 0)
 			exit(1);
-		exec_external(cmd ->argv,sh ->envp);
+		exec_external(cmd->argv, sh->envp);
 	}
 	return (0);
 }
 
+static int	inter_target_fd(const t_redir *redir)
+{
+	if (!redir)
+		return (-1);
+	if (redir->fd_target >= 0)
+		return (redir->fd_target);
+	if (redir->kind == R_IN || redir->kind == R_HDOC)
+		return (STDIN_FILENO);
+	return (STDOUT_FILENO);
+}
+
+static int	open_src_fd(t_redir *redir)
+{
+	int	src_fd;
+
+	src_fd = -1;
+	if (redir->kind == R_HDOC)
+	{
+		src_fd = redir->hdoc_fd;
+		if (src_fd < 0)
+			return (-1);
+	}
+	else if (redir->kind == R_IN)
+	{
+		src_fd = open(redir->arg, O_RDONLY);
+		if (src_fd < 0)
+			return (perror(redir->arg), -1);
+	}
+	else if (redir->kind == R_OUT)
+	{
+		src_fd = open(redir->arg, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+		if (src_fd < 0)
+			return (perror(redir->arg), -1);
+	}
+	else if (redir->kind == R_APP)
+	{
+		src_fd = open(redir->arg, O_CREAT | O_WRONLY | O_APPEND, 0644);
+		if (src_fd < 0)
+			return (perror(redir->arg), -1);
+	}
+	return (src_fd);
+}
+
 int	apply_redirs(const t_cmd *cmd)
 {
-	const t_redir	*redir;
-	int				fd;
+	t_redir	*redir;
+	int		src_fd;
+	int		target_fd;
 
 	if (!cmd)
 		return (-1);
 	redir = cmd->redirs;
 	while (redir)
 	{
-		fd = -1;
-		// if (redir->kind == R_HDOC)
-		// {
-		// 	fd = redir->hdoc_fd; // 事前収集済みの読み端
-		// 	if (fd < 0)
-		// 		return (-1);
-		// 	if (dup2(fd, STDIN_FILENO) < 0)
-		// 		return (perror("dup2"), -1);
-		// 	close(fd);
-		// }
-		if (redir->kind == R_IN)
+		src_fd = -1;
+		target_fd = inter_target_fd(redir);
+		if (target_fd < 0 || target_fd >= 1024)
+			return (perror("bad target fd"), -1);
+		src_fd = open_src_fd(redir);
+		if (src_fd < 0)
+			return (-1);
+		if (src_fd != target_fd)
 		{
-			fd = open(redir->arg, O_RDONLY);
-			if (fd < 0)
-				return (perror(redir->arg), -1);
-			if (dup2(fd, STDIN_FILENO) < 0)
+			if (dup2(src_fd, target_fd) < 0)
 			{
 				perror("dup2");
-				close(fd);
+				if (redir->kind != R_HDOC)
+					close(src_fd);
 				return (-1);
 			}
-			close(fd);
 		}
-		else if (redir->kind == R_OUT)
-		{
-			fd = open(redir->arg, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-			if (fd < 0)
-				return (perror(redir->arg), -1);
-			if (dup2(fd, STDOUT_FILENO) < 0)
-			{
-				perror("dup2");
-				close(fd);
-				return (-1);
-			}
-			close(fd);
-		}
-		else if (redir->kind == R_APP)
-		{
-			fd = open(redir->arg, O_CREAT | O_WRONLY | O_APPEND, 0644);
-			if (fd < 0)
-				return (perror(redir->arg), -1);
-			if (dup2(fd, STDOUT_FILENO) < 0)
-			{
-				perror("dup2");
-				close(fd);
-				return (-1);
-			}
-			close(fd);
-		}
-		redir = redir->next; // 次のリダイレクトへ
+		if (redir->kind != R_HDOC || (redir->kind == R_HDOC
+				&& src_fd != target_fd))
+			close(src_fd);
+		redir = redir->next;
 	}
 	return (0);
 }
