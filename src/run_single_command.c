@@ -69,34 +69,34 @@ static int	open_src_fd(t_redir *redir)
 int	apply_redirs(const t_cmd *cmd)
 {
 	t_redir	*redir;
-	int		src_fd;
-	int		target_fd;
+	int		from_fd;
+	int		to_fd;
 
 	if (!cmd)
 		return (-1);
 	redir = cmd->redirs;
 	while (redir)
 	{
-		src_fd = -1;
-		target_fd = inter_target_fd(redir);
-		if (target_fd < 0 || target_fd >= 1024)
+		from_fd = -1;
+		to_fd = inter_target_fd(redir);
+		if (to_fd < 0 || to_fd >= 1024)
 			return (perror("bad target fd"), -1);
-		src_fd = open_src_fd(redir);
-		if (src_fd < 0)
+		from_fd = open_src_fd(redir);
+		if (from_fd < 0)
 			return (-1);
-		if (src_fd != target_fd)
+		if (from_fd != to_fd)
 		{
-			if (dup2(src_fd, target_fd) < 0)
+			if (dup2(from_fd, to_fd) < 0)
 			{
 				perror("dup2");
 				if (redir->kind != R_HDOC)
-					close(src_fd);
+					close(from_fd);
 				return (-1);
 			}
 		}
 		if (redir->kind != R_HDOC || (redir->kind == R_HDOC
-				&& src_fd != target_fd))
-			close(src_fd);
+				&& from_fd != to_fd))
+			close(from_fd);
 		redir = redir->next;
 	}
 	return (0);
