@@ -7,7 +7,7 @@ int	run_single_command(t_cmd *cmd, t_shell *sh)
 	if (!cmd->argv || !cmd->argv[0])
 		return (1);
 	if (cmd->is_builtin)
-		return (1);
+		return (1); //あとでビルトイン実装
 	// if (prepare_heredocs_for_cmd(sh, cmd) < 0)
 	// {
 	// 	// Ctrl-C などで中断された場合はここで終了
