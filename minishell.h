@@ -76,7 +76,8 @@ int							apply_redirs(const t_cmd *cmd);
 void						exec_external(char *const argv[],
 								char *const envp[]);
 char						*find_cmd_path(const char *cmd, char *const *envp);
-// int							prepare_heredocs_for_cmd(t_shell *sh,
-// t_cmd *cmd);
+int prepare_heredocs(t_ast *node, t_shell *sh);
+int read_heredoc_into_fd(int write_fd, t_redir *redir, t_shell *sh);
+void close_all_prepared_hdocs(t_ast *node);
 
 #endif

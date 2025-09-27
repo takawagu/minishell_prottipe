@@ -8,11 +8,7 @@ int	run_single_command(t_cmd *cmd, t_shell *sh)
 		return (1);
 	if (cmd->is_builtin)
 		return (1); //あとでビルトイン実装
-	// if (prepare_heredocs_for_cmd(sh, cmd) < 0)
-	// {
-	// 	// Ctrl-C などで中断された場合はここで終了
-	// 	return (1);
-	// }
+
 	pid = fork();
 	if (pid == 0)
 	{
@@ -23,7 +19,7 @@ int	run_single_command(t_cmd *cmd, t_shell *sh)
 	return (0);
 }
 
-static int	inter_target_fd(const t_redir *redir)
+static int	resolve_target_fd(const t_redir *redir)
 {
 	if (!redir)
 		return (-1);
@@ -78,7 +74,7 @@ int	apply_redirs(const t_cmd *cmd)
 	while (redir)
 	{
 		from_fd = -1;
-		to_fd = inter_target_fd(redir);
+		to_fd = resolve_target_fd(redir);
 		if (to_fd < 0 || to_fd >= 1024)
 			return (perror("bad target fd"), -1);
 		from_fd = open_src_fd(redir);
