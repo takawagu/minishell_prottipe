@@ -9,6 +9,8 @@
 # include <signal.h>
 # include <stdio.h>
 # include <stdlib.h>
+# include <sys/types.h>
+# include <sys/wait.h>
 # include <unistd.h>
 
 // ノード種別（AST）
@@ -44,6 +46,7 @@ typedef struct s_cmd
 	char **argv;     // 例: {"grep","foo",NULL}（展開・クォート除去後）
 	t_redir *redirs; // このコマンドのリダイレクト連結リスト
 	int is_builtin;  // 実行時の分岐に使うフラグ（0/1） or 別enum
+	int is_child;    //子プロセスの中かどうかの判定
 }							t_cmd;
 
 // ASTノード本体
@@ -76,7 +79,17 @@ int							apply_redirs(const t_cmd *cmd);
 void						exec_external(char *const argv[],
 								char *const envp[]);
 char						*find_cmd_path(const char *cmd, char *const *envp);
-// int							prepare_heredocs_for_cmd(t_shell *sh,
-// t_cmd *cmd);
+int							read_heredoc_into_fd(int write_fd, t_redir *redir,
+								t_shell *sh);
+int							prepare_cmd_heredocs(t_cmd *cmd, t_shell *sh,
+								t_ast *node);
+void						close_hdocs_in_cmd(t_cmd *cmd);
+void						close_all_prepared_hdocs(t_ast *node);
+int							status_to_exitcode(int wstatus);
+void						close_hdocs_in_cmd(t_cmd *cmd);
+void						close_all_prepared_hdocs(t_ast *node);
+
+int							reap_pipeline_and_set_last_status(pid_t last_pid,
+								int *dst);
 
 #endif
