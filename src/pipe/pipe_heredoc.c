@@ -1,42 +1,39 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipe_status.c                                      :+:      :+:    :+:   */
+/*   pipe_heredoc.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/10/02 14:40:23 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/03 18:51:05 by takawagu         ###   ########.fr       */
+/*   Created: 2025/10/03 14:10:56 by takawagu          #+#    #+#             */
+/*   Updated: 2025/10/04 13:37:18 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-int	reap_pipeline_and_set_last_status(pid_t last_pid, t_shell *sh)
+int	prepare_all_heredocs(t_cmd **pipeline_cmds, size_t count_cmd, t_shell *sh)
 {
-	int		wstatus;
-	int		seen_last;
-	pid_t	pid;
+	size_t	index;
 
-	seen_last = 0;
-	while (1)
+	index = 0;
+	while (index < count_cmd)
 	{
-		pid = waitpid(-1, &wstatus, 0);
-		if (pid == -1)
-		{
-			if (errno == EINTR)
-				continue ;
-			if (errno == ECHILD)
-				break ;
-			return (-1);
-		}
-		if (pid == last_pid)
-		{
-			sh->last_status = status_to_exitcode(wstatus);
-			seen_last = 1;
-		}
+		if (prepare_cmd_heredocs(pipeline_cmds[index], sh, NULL) != 0)
+			return (sh->last_status);
+		index++;
 	}
-	if (!seen_last)
-		return (-1);
 	return (0);
+}
+
+void	close_hdocs_in_pipeline(t_cmd **pipeline_cmds, size_t count_cmd)
+{
+	size_t	index;
+
+	index = 0;
+	while (index < count_cmd)
+	{
+		close_hdocs_in_cmd(pipeline_cmds[index]);
+		index++;
+	}
 }

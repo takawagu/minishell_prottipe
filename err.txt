@@ -1,0 +1,2 @@
+zsh: command not found: nosuchcommand
+nosuchcommand: command not found
