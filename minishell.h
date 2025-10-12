@@ -13,6 +13,7 @@
 # include <sys/wait.h>
 # include <unistd.h>
 
+// TOKENの種類を判別
 typedef enum e_tok_kind
 {
 	TK_WORD,      // コマンド名・引数・リダイレクトのターゲット（まだ展開前）
@@ -21,26 +22,48 @@ typedef enum e_tok_kind
 	TK_REDIR_OUT, // >
 	TK_REDIR_APP, // >>
 	TK_HEREDOC,   // <<
-	TK_SINGLE,    //
-	TK_DOUBLE,
-	TK_EOF // 入力末尾
+	TK_EOF        // 入力末尾
 }							t_tok_kind;
+
+//クォートの種類を判別
+typedef enum e_quote_kind
+{
+	NO_QUOTE,
+	SINGLE,
+	DOUBLE
+}							t_quote_kind;
+
+typedef struct s_parts
+{
+	char *text;         // 生（クォートは外さない or 外すなら別マスク）
+	t_quote_kind quote; // NO_QUOTE / SINGLE / DOUBLE
+}							t_parts;
+
+//トークンの中身を細かく分割した構造体
+typedef struct s_wordinfo
+{
+	t_parts *parts;     // 連結で1語を構成（例:  a"$USER"'x' ）
+	size_t parts_count; // parts の数
+	int had_dollar;     // '$' を含む（SINGLE 内は無視するため後工程が最適化できる）
+	int had_quotes;     // どこかにクォートがあった（quote-removalの有無判定に便利）
+}							t_wordinfo;
 
 /* 1トークン */
 typedef struct s_token
 {
-	t_tok_kind kind; // WORD / PIPE / RE_IN/OUT/APP/HEREDOC / EOF
-	char *lexeme;    // 生（クォート込み）
-	size_t pos;      // エラー表示用（なくても動く）
+	char *args;            //文字列
+	t_tok_kind token_kind; // WORD/PIPE/RE_IN/OUT/APP/HEREDOC/EOF
+	t_wordinfo word_info;  // 文字列とそれに紐づく情報
+	int fd_left;           // 2> 等の左FD（なければ -1）
+	int hdoc_quoted;       // TK_HEREDOC 用: リミッタがクォートされていたか
 }							t_token;
 
-/* 配列（ベクタ） or 単純リスト、どちらでもOK */
-typedef struct s_toklist
+//トークンの配列をしまう構造体
+typedef struct s_tokvec
 {
-	t_token					*v;
+	t_token					*vector;
 	size_t					len;
-	size_t					cap;
-}							t_toklist;
+}							t_tokvec;
 
 // ノード種別（AST）
 typedef enum e_ast_type
@@ -128,9 +151,11 @@ void						close_all_prepared_hdocs(t_ast *node);
 void						close_hdocs_in_cmd(t_cmd *cmd);
 void						close_all_prepared_hdocs(t_ast *node);
 
-// error
-int							return_laststatus(t_shell *sh, int error_code);
-int							status_to_exitcode(int wstatus);
+// parse
+t_ast						*parse_command(const t_token *vector, size_t len,
+								size_t *idx);
+int							is_redir_op(t_tok_kind k);
+int							precheck_syntax(const t_tokvec *tv);
 
 // pipe
 int							reap_pipeline_and_set_last_status(pid_t last_pid,
@@ -154,5 +179,9 @@ int							pipeline_error_cleanup(t_pipe_ctx *ctx,
 								t_cmd **pipeline_cmds, size_t n, t_shell *sh);
 int							build_pipeline_cmds(const t_ast *root,
 								t_cmd ***out_seq, size_t *out_n, t_shell *sh);
+
+// error
+int							return_laststatus(t_shell *sh, int error_code);
+int							status_to_exitcode(int wstatus);
 
 #endif

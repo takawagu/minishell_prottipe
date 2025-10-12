@@ -1,29 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pwd.c                                              :+:      :+:    :+:   */
+/*   input.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
+/*   By: keitabe <keitabe@student.42tokyo.jp>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/30 12:56:55 by takawagu          #+#    #+#             */
-/*   Updated: 2025/09/30 15:54:23 by takawagu         ###   ########.fr       */
+/*   Created: 2025/10/02 12:14:15 by keitabe           #+#    #+#             */
+/*   Updated: 2025/10/02 12:51:20 by keitabe          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minishell.h"
+#ifndef INPUT_H
+# define INPUT_H
 
-int	builtin_pwd(char **argv)
-{
-	char	*cwd;
+# include <readline/history.h>
+# include <readline/readline.h>
+# include <stdlib.h>
 
-	(void)argv;
-	cwd = getcwd(NULL, 0);
-	if (!cwd)
-	{
-		perror("minishell: pwd");
-		return (1);
-	}
-	ft_printf("%s\n", cwd);
-	free(cwd);
-	return (0);
-}
+extern volatile __sig_atomic_t	g_sig;
+
+#endif

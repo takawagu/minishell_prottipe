@@ -1,29 +1,24 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pwd.c                                              :+:      :+:    :+:   */
+/*   signals.h                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
+/*   By: keitabe <keitabe@student.42tokyo.jp>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/09/30 12:56:55 by takawagu          #+#    #+#             */
-/*   Updated: 2025/09/30 15:54:23 by takawagu         ###   ########.fr       */
+/*   Created: 2025/10/07 13:48:27 by keitabe           #+#    #+#             */
+/*   Updated: 2025/10/07 15:37:40 by keitabe          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minishell.h"
+#ifndef SIGNALS_H
+# define SIGNALS_H
 
-int	builtin_pwd(char **argv)
-{
-	char	*cwd;
+# define _POSIX_C_SOURCE 200809L
 
-	(void)argv;
-	cwd = getcwd(NULL, 0);
-	if (!cwd)
-	{
-		perror("minishell: pwd");
-		return (1);
-	}
-	ft_printf("%s\n", cwd);
-	free(cwd);
-	return (0);
-}
+# include <signal.h>
+# include <stdlib.h>
+# include <unistd.h>
+
+extern volatile sig_atomic_t	g_sig;
+
+#endif
