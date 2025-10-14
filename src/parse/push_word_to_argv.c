@@ -6,7 +6,7 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 14:02:11 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/13 18:37:20 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/10/14 13:27:59 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ static char	*x_strdup(const char *str)
 	ft_memcpy(ptr, str, n + 1);
 	return (ptr);
 }
+
 static size_t	old_argv_length(char *const *old_argv)
 {
 	size_t	len;

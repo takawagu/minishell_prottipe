@@ -6,7 +6,7 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 19:17:39 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/13 19:35:36 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/10/14 13:46:35 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,16 +31,39 @@ static char	*dup_token_arg(const t_token *token)
 		return (ft_strdup(token->args));
 	return (ft_strdup(""));
 }
+static void	append_redir(t_redir **head, t_redir *redir)
+{
+	t_redir	**tail;
 
-int	push_redir(t_cmd *cmd, const t_token *op_tok, const t_token *word_tok)
+	tail = head;
+	while (*tail)
+		tail = &(*tail)->next;
+	*tail = redir;
+}
+
+static void	init_redir_fields(t_redir *redir, t_rtype kind, const t_token *tok)
+{
+	redir->kind = kind;
+	if (kind == R_HDOC)
+		redir->quoted = tok->hdoc_quoted;
+	else
+		redir->quoted = 0;
+	if (tok->fd_left >= 0)
+		redir->fd_target = tok->fd_left;
+	else
+		redir->fd_target = -1;
+	redir->hdoc_fd = -1;
+	redir->next = NULL;
+}
+
+int	push_redir(t_cmd *cmd, const t_token *redir_tok, const t_token *word_tok)
 {
 	t_redir	*new_redir;
-	t_redir	**tail;
 	t_rtype	kind;
 
-	if (!cmd || !op_tok || !word_tok || word_tok->token_kind != TK_WORD)
+	if (!cmd || !redir_tok || !word_tok || word_tok->token_kind != TK_WORD)
 		return (-1);
-	kind = kind_from_token(op_tok->token_kind);
+	kind = kind_from_token(redir_tok->token_kind);
 	if (kind < 0)
 		return (-1);
 	new_redir = malloc(sizeof(*new_redir));
@@ -52,20 +75,7 @@ int	push_redir(t_cmd *cmd, const t_token *op_tok, const t_token *word_tok)
 		free(new_redir);
 		return (-1);
 	}
-	new_redir->kind = kind;
-	if (kind == R_HDOC)
-		new_redir->quoted = op_tok->hdoc_quoted;
-	else
-		new_redir->quoted = 0;
-	if (op_tok->fd_left >= 0)
-		new_redir->fd_target = op_tok->fd_left;
-	else
-		new_redir->fd_target = -1;
-	new_redir->hdoc_fd = -1;
-	new_redir->next = NULL;
-	tail = &cmd->redirs;
-	while (*tail)
-		tail = &(*tail)->next;
-	*tail = new_redir;
+	init_redir_fields(new_redir, kind, redir_tok);
+	append_redir(&cmd->redirs, new_redir);
 	return (0);
 }
