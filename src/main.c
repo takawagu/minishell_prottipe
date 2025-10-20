@@ -408,6 +408,8 @@ int	main(int argc, char **argv, char **envp)
 	int			which;
 	int			status;
 
+	// t_env		*env;
+	// sh.env = env;
 	ft_memset(&sh, 0, sizeof(sh));
 	which = 1;
 	status = 0;
@@ -417,6 +419,12 @@ int	main(int argc, char **argv, char **envp)
 	sh.envp = envp;
 	sh.last_status = 0;
 	sh.interactive = 0;
+	// if (env_init_from_envp(&sh.env, envp) < 0)
+	// if (env_init_from_envp(&sh.env, envp) < 0)
+	// {
+	// 	fprintf(stderr, "minishell: failed to set up environment\n");
+	//  	return (EXIT_FAILURE);
+	// }
 	if (argc >= 2)
 		which = atoi(argv[1]);
 	switch (which)
@@ -569,7 +577,6 @@ int	main(int argc, char **argv, char **envp)
 			{.token_kind = TK_REDIR_IN, .fd_left = -1},
 			{.args = "infile", .token_kind = TK_WORD, .fd_left = -1},
 			{.token_kind = TK_PIPE, .fd_left = -1},
-			{.token_kind = TK_PIPE, .fd_left = -1},
 			{.args = "grep", .token_kind = TK_WORD, .fd_left = -1},
 			{.args = "b", .token_kind = TK_WORD, .fd_left = -1},
 			{.token_kind = TK_REDIR_OUT, .fd_left = -1},
@@ -600,8 +607,135 @@ int	main(int argc, char **argv, char **envp)
 		tv.len = sizeof(case12) / sizeof(case12[0]);
 		break ;
 	}
+	case 13:
+	{
+		static t_token v[] = {
+			{.token_kind = TK_PIPE, .fd_left = -1},
+			{.args = "echo", .token_kind = TK_WORD, .fd_left = -1},
+			{.args = "a", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_EOF, .fd_left = -1},
+		};
+		tv.vector = v;
+		tv.len = sizeof(v) / sizeof(v[0]);
+		break ;
+	}
+	case 14:
+	{
+		static t_token v[] = {
+			{.args = "echo", .token_kind = TK_WORD, .fd_left = -1},
+			{.args = "a", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_PIPE, .fd_left = -1},
+			{.token_kind = TK_EOF, .fd_left = -1},
+		};
+		tv.vector = v;
+		tv.len = sizeof(v) / sizeof(v[0]);
+		break ;
+	}
+	case 15:
+	{
+		static t_token v[] = {
+			{.args = "echo", .token_kind = TK_WORD, .fd_left = -1},
+			{.args = "a", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_REDIR_OUT, .fd_left = -1},
+			{.token_kind = TK_EOF, .fd_left = -1},
+		};
+		tv.vector = v;
+		tv.len = sizeof(v) / sizeof(v[0]);
+		break ;
+	}
+	case 16:
+	{
+		static t_token v[] = {
+			{.args = "echo", .token_kind = TK_WORD, .fd_left = -1},
+			{.args = "a", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_REDIR_OUT, .fd_left = -1},
+			{.token_kind = TK_PIPE, .fd_left = -1},
+			{.args = "wc", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_EOF, .fd_left = -1},
+		};
+		tv.vector = v;
+		tv.len = sizeof(v) / sizeof(v[0]);
+		break ;
+	}
+	case 17:
+	{
+		static t_token v[] = {
+			{.args = "/bin/cat", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_HEREDOC, .fd_left = -1, .hdoc_quoted = 0},
+			{.token_kind = TK_EOF, .fd_left = -1},
+		};
+		tv.vector = v;
+		tv.len = sizeof(v) / sizeof(v[0]);
+		break ;
+	}
+	case 18:
+	{
+		static t_token v[] = {
+			{.args = "echo", .token_kind = TK_WORD, .fd_left = -1},
+			{.args = "a", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_PIPE, .fd_left = -1},
+			{.token_kind = TK_PIPE, .fd_left = -1}, // ここでエラー想定
+			{.args = "echo", .token_kind = TK_WORD, .fd_left = -1},
+			{.args = "b", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_EOF, .fd_left = -1},
+		};
+		tv.vector = v;
+		tv.len = sizeof(v) / sizeof(v[0]);
+		break ;
+	}
+	case 19:
+	{
+		static t_token v[] = {
+			{.args = "/bin/echo", .token_kind = TK_WORD, .fd_left = -1},
+			{.args = "HOME=$HOME", .token_kind = TK_WORD, .fd_left = -1},
+			{.args = "STATUS=$?", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_EOF, .fd_left = -1},
+		};
+		tv.vector = v;
+		tv.len = sizeof(v) / sizeof(v[0]);
+		break ;
+	}
+	case 20:
+	{
+		static t_token v[] = {
+			{.args = "/bin/echo", .token_kind = TK_WORD, .fd_left = -1},
+			{.args = "\"$USER\"", .token_kind = TK_WORD, .fd_left = -1},
+			{.args = "'$SHELL'", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_EOF, .fd_left = -1},
+		};
+		tv.vector = v;
+		tv.len = sizeof(v) / sizeof(v[0]);
+		break ;
+	}
+	case 21:
+	{
+		static t_token v[] = {
+			{.args = "/bin/echo", .token_kind = TK_WORD, .fd_left = -1},
+			{.args = "redirect", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_REDIR_OUT, .fd_left = -1},
+			{.args = "$TMPDIR/out.txt", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_EOF, .fd_left = -1},
+		};
+		tv.vector = v;
+		tv.len = sizeof(v) / sizeof(v[0]);
+		break ;
+	}
+	case 22:
+	{
+		static t_token v[] = {
+			{.args = "/bin/cat", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_HEREDOC, .fd_left = -1, .hdoc_quoted = 0},
+			{.args = "EOF", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_REDIR_OUT, .fd_left = -1},
+			{.args = "out.txt", .token_kind = TK_WORD, .fd_left = -1},
+			{.token_kind = TK_EOF, .fd_left = -1},
+		};
+		tv.vector = v;
+		tv.len = sizeof(v) / sizeof(v[0]);
+		break ;
+	}
 	default:
-		fprintf(stderr, "usage: %s [1..12]\n", argv[0]);
+		fprintf(stderr, "usage: %s [1..22]\n", argv[0]);
 		fprintf(stderr, "  1: grep b <<EOF > outfile\n");
 		fprintf(stderr, "  2: /bin/ls -l\n");
 		fprintf(stderr, "  3: /bin/echo -n hello > out.txt\n");
@@ -615,60 +749,82 @@ int	main(int argc, char **argv, char **envp)
 		fprintf(stderr, " 10: 0<<LIM /bin/cat 2> err.txt\n");
 		fprintf(stderr, " 11: /bin/cat < infile | grep b > outfile\n");
 		fprintf(stderr, " 12: /bin/cat < infile | grep b | wc -l > outfile\n");
+		fprintf(stderr, " 13: | echo a            (先頭パイプで構文エラー)\n");
+		fprintf(stderr, " 14: echo a |            (末尾パイプで構文エラー)\n");
+		fprintf(stderr, " 15: echo a >            (リダイレクト後ろが欠落)\n");
+		fprintf(stderr, " 16: echo a > | wc       (リダイレクトとパイプ混在の構文確認)\n");
+		fprintf(stderr, " 17: /bin/cat <<EOF      (ヒアドキュメントのみ)\n");
+		fprintf(stderr, " 18: echo a || echo b    (連続パイプでエラー想定)\n");
+		fprintf(stderr, " 19: /bin/echo HOME=$HOME STATUS=$?   (環境変数展開)\n");
+		fprintf(stderr, " 20: /bin/echo \"$USER\" '$SHELL'      (クォート有り展開)\n");
+		fprintf(stderr,
+			" 21:/bin/echo redirect > $TMPDIR/out.txt (リダイレクト先を展開)\n");
+		fprintf(stderr,
+			" 22:/bin/cat <<EOF > out.txt        (ヒアドキュメント展開テスト)\n");
 		return (2);
+		root = make_ast(&tv, &sh);
+		if (root && expand(root, &sh) == -1)
+		{
+			free_ast(root);
+			root = NULL;
+			status = 1;
+		}
+		if (root)
+		{
+			status = exec_entry(root, &sh);
+			free_ast(root);
+		}
+		printf("[status] %d\n", status);
+		return (status != 0);
+		// if (!tv.vector || tv.len == 0)
+		// 	return (1);
+		// if (!precheck_syntax(&tv))
+		// 	return (1);
+		// vector = tv.vector;
+		// parse_limit = tv.len;
+		// if (parse_limit > 0 && vector[parse_limit - 1].token_kind == TK_EOF)
+		// 	parse_limit--;
+		// idx = 0;
+		// if (idx >= parse_limit)
+		// 	return (1);
+		// {
+		// 	boundary = idx;
+		// 	while (boundary < parse_limit
+		// && vector[boundary].token_kind != TK_PIPE)
+		// 		boundary++;
+		// 	root = parse_command(vector, boundary, &idx);
+		// 	if (!root)
+		// 		return (1);
+		// 	while (idx < parse_limit)
+		// 	{
+		// 		if (vector[idx].token_kind != TK_PIPE)
+		// 			return (free_ast(root), 1);
+		// 		idx++;
+		// 		next_boundary = idx;
+		// 		while (next_boundary < parse_limit
+		// 			&& vector[next_boundary].token_kind != TK_PIPE)
+		// 			next_boundary++;
+		// 		right = parse_command(vector, next_boundary, &idx);
+		// 		if (!right)
+		// 			return (free_ast(root), 1);
+		// 		pipe_node = malloc(sizeof(*pipe_node));
+		// 		if (!pipe_node)
+		// 		{
+		// 			free_ast(right);
+		// 			free_ast(root);
+		// 			perror("malloc");
+		// 			return (1);
+		// 		}
+		// 		pipe_node->type = AST_PIPE;
+		// 		pipe_node->as.pipe.left = root;
+		// 		pipe_node->as.pipe.right = right;
+		// 		root = pipe_node;
+		// 	}
+		// 	if (idx != parse_limit)
+		// 	{
+		// 		free_ast(root);
+		// 		return (1);
+		// 	}
+		// }
 	}
-	root = make_ast(&tv, &sh);
-	status = exec_entry(root, &sh);
-	printf("[status] %d\n", status);
-	free_ast(root);
-	return (status != 0);
-	// if (!tv.vector || tv.len == 0)
-	// 	return (1);
-	// if (!precheck_syntax(&tv))
-	// 	return (1);
-	// vector = tv.vector;
-	// parse_limit = tv.len;
-	// if (parse_limit > 0 && vector[parse_limit - 1].token_kind == TK_EOF)
-	// 	parse_limit--;
-	// idx = 0;
-	// if (idx >= parse_limit)
-	// 	return (1);
-	// {
-	// 	boundary = idx;
-	// 	while (boundary < parse_limit && vector[boundary].token_kind != TK_PIPE)
-	// 		boundary++;
-	// 	root = parse_command(vector, boundary, &idx);
-	// 	if (!root)
-	// 		return (1);
-	// 	while (idx < parse_limit)
-	// 	{
-	// 		if (vector[idx].token_kind != TK_PIPE)
-	// 			return (free_ast(root), 1);
-	// 		idx++;
-	// 		next_boundary = idx;
-	// 		while (next_boundary < parse_limit
-	// 			&& vector[next_boundary].token_kind != TK_PIPE)
-	// 			next_boundary++;
-	// 		right = parse_command(vector, next_boundary, &idx);
-	// 		if (!right)
-	// 			return (free_ast(root), 1);
-	// 		pipe_node = malloc(sizeof(*pipe_node));
-	// 		if (!pipe_node)
-	// 		{
-	// 			free_ast(right);
-	// 			free_ast(root);
-	// 			perror("malloc");
-	// 			return (1);
-	// 		}
-	// 		pipe_node->type = AST_PIPE;
-	// 		pipe_node->as.pipe.left = root;
-	// 		pipe_node->as.pipe.right = right;
-	// 		root = pipe_node;
-	// 	}
-	// 	if (idx != parse_limit)
-	// 	{
-	// 		free_ast(root);
-	// 		return (1);
-	// 	}
-	// }
 }

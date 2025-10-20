@@ -85,8 +85,9 @@ typedef enum e_rtype
 typedef struct s_redir
 {
 	t_rtype					kind;
-	char *arg;  // filename or heredoc limiter（展開後/前の方針は後述）
-	int quoted; // heredoc limiter がクォートされていたか（展開抑制用）
+	char *arg; // filename or heredoc limiter（展開後/前の方針は後述）
+	t_wordinfo				*word_info;
+	int here_doc_quoted; // heredoc limiter がクォートされていたか（展開抑制用）
 	int						fd_target;
 	int						hdoc_fd;
 	struct s_redir			*next;
@@ -95,7 +96,9 @@ typedef struct s_redir
 // 1コマンド（葉）
 typedef struct s_cmd
 {
-	char **argv;     // 例: {"grep","foo",NULL}（展開・クォート除去後）
+	char **argv; // 例: {"grep","foo",NULL}（展開・クォート除去後）
+	t_wordinfo				**word_infos;
+	size_t					argc;
 	t_redir *redirs; // このコマンドのリダイレクト連結リスト
 	int is_builtin;  // 実行時の分岐に使うフラグ（0/1） or 別enum
 	int is_child;    //子プロセスの中かどうかの判定
@@ -116,13 +119,23 @@ typedef struct s_ast
 	} as;
 }							t_ast;
 
+//環境変数のテーブル
+typedef struct s_env
+{
+	char *key; // malloc所有
+	char *val; // malloc所有（NULL許可するなら要注意）
+	unsigned exported : 1;
+	struct s_env			*next;
+}							t_env;
+
 // 実行時に必要な外部情報
 typedef struct s_shell
 {
 	char **envp;     // execve用の環境
 	int last_status; // $? の更新先
 	int interactive; // 対話モードか
-						// 必要なら: sigフラグや一時fdの退避など
+	t_env					*env;
+	// 必要なら: sigフラグや一時fdの退避など
 }							t_shell;
 
 // pipe用構造体
@@ -164,11 +177,25 @@ t_ast						*parse_command_fail(t_cmd *cmd);
 int							syntax_fail(const t_token *tok, t_shell *sh);
 void						free_ast(t_ast *node);
 t_ast						*make_ast(t_tokvec *tokenvec, t_shell *shell);
+int							append_wordinfo(t_cmd *cmd, const t_wordinfo *info);
+t_wordinfo					*clone_wordinfo(const t_wordinfo *src);
+void						free_wordinfo(t_wordinfo *info);
+void						free_cmd_wordinfos(t_cmd *cmd);
+
+// expand
+int							expand(t_ast *node, t_shell *sh);
+char						*expand_word(const t_wordinfo *info, t_shell *sh);
+char						*expand_chunk(const char *chunk, t_shell *sh);
+char						*append_literal(const char *text);
+const char					*lookup_env(const char *name, t_shell *sh);
+char						*join_and_free(char *left, const char *right);
+char						*join_num_and_free(char *left, int n);
+int							is_valid_var_head(char c);
+size_t						var_length(const char *str);
 
 // pipe
 int							reap_pipeline_and_set_last_status(pid_t last_pid,
 								t_shell *sh);
-
 void						pipe_ctx_init(t_pipe_ctx *ctx);
 int							pipe_ctx_prepare_step(t_pipe_ctx *ctx, size_t i,
 								size_t n);
