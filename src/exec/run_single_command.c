@@ -6,7 +6,7 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/04 14:06:06 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/04 15:21:48 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/10/22 18:13:10 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@ static void	exec_child_single(t_cmd *cmd, t_shell *sh)
 {
 	if (apply_redirs(cmd) < 0)
 		exit(1);
-	exec_external(cmd->argv, sh->envp);
+	exec_external(cmd->argv, sh);
 	if (errno == ENOENT)
 		exit(127);
 	else

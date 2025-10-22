@@ -6,7 +6,7 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 14:24:15 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/04 13:34:37 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/10/22 19:59:43 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,13 +27,13 @@ static int	setup_pipeline_exec(const t_ast *root, t_cmd ***out_seq,
 	if (build_pipeline_cmds(root, &pipeline_cmds, &count_cmds, sh) != 0)
 		return (sh->last_status);
 	if (prepare_all_heredocs(pipeline_cmds, count_cmds, sh) != 0)
-		pipeline_cmds_cleanup_and_return(pipeline_cmds, sh);
+		pipe_cmds_cleanup_and_return(pipeline_cmds, sh);
 	*out_seq = pipeline_cmds;
 	*out_n = count_cmds;
 	return (0);
 }
 
-static int	run_pipeline_loop(t_cmd **pipeline_cmds, size_t count_cmds,
+static int	run_pipeline_loop(t_cmd **pipe_cmds, size_t count_cmds,
 		t_pipe_ctx *pipe_ctx, t_shell *sh)
 {
 	pid_t	pid;
@@ -45,16 +45,16 @@ static int	run_pipeline_loop(t_cmd **pipeline_cmds, size_t count_cmds,
 		if (pipe_ctx_prepare_step(pipe_ctx, i, count_cmds) < 0)
 		{
 			perror("pipe");
-			return (pipeline_error_cleanup(pipe_ctx, pipeline_cmds, count_cmds, sh));
+			return (pipe_error_cleanup(pipe_ctx, pipe_cmds, count_cmds, sh));
 		}
 		pid = fork();
 		if (pid < 0)
 		{
 			perror("fork");
-			return (pipeline_error_cleanup(pipe_ctx, pipeline_cmds, count_cmds, sh));
+			return (pipe_error_cleanup(pipe_ctx, pipe_cmds, count_cmds, sh));
 		}
 		if (pid == 0)
-			run_pipeline_child(pipe_ctx, pipeline_cmds, i, sh);
+			run_pipeline_child(pipe_ctx, pipe_cmds, i, sh);
 		pipe_ctx->last_pid = pid;
 		pipe_ctx_parent_after_fork(pipe_ctx);
 		i++;

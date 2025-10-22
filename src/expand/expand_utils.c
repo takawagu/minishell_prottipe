@@ -6,13 +6,12 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/17 17:24:16 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/20 11:31:08 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/10/22 19:33:34 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-/* 数値用（例: $?） */
 char	*join_num_and_free(char *left, int n)
 {
 	char	*tmp;
@@ -40,11 +39,10 @@ size_t	var_length(const char *str)
 		len++;
 	return (len);
 }
+
 char	*append_literal(const char *text)
 {
 	if (!text)
 		return (ft_strdup(""));
 	return (ft_strdup(text));
 }
-
-

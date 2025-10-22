@@ -6,7 +6,7 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/20 11:20:27 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/20 14:33:14 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/10/22 19:33:04 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,27 +28,22 @@ const char	*lookup_env(const char *name, t_shell *sh)
 	return (NULL);
 }
 
-static int	handle_status_expansion(char **result, const char *chunk,
-		size_t *index, t_shell *sh)
+static int	append_status_expansion(char **result, size_t *index, t_shell *sh)
 {
-	if (chunk[*index] != '$' || chunk[*index + 1] != '?')
-		return (0);
 	*result = join_num_and_free(*result, sh->last_status);
 	if (!*result)
 		return (-1);
 	*index += 2;
-	return (1);
+	return (0);
 }
 
-static int	handle_env_expansion(char **result, const char *chunk,
+static int	append_env_expansion(char **result, const char *chunk,
 		size_t *index, t_shell *sh)
 {
 	size_t		len;
 	char		*name;
 	const char	*val;
 
-	if (chunk[*index] != '$' || !is_valid_var_head(chunk[*index + 1]))
-		return (0);
 	len = var_length(chunk + *index + 1);
 	name = ft_substr(chunk, *index + 1, len);
 	if (!name)
@@ -61,28 +56,27 @@ static int	handle_env_expansion(char **result, const char *chunk,
 	if (!*result)
 		return (-1);
 	*index += len + 1;
-	return (1);
+	return (0);
 }
 
 static int	append_next_segment(char **result, const char *chunk, size_t *index,
 		t_shell *sh)
 {
-	int	handled;
+	char	buf[2];
 
-	handled = handle_status_expansion(result, chunk, index, sh);
-	if (handled < 0)
-		return (-1);
-	if (handled > 0)
-		return (0);
-	handled = handle_env_expansion(result, chunk, index, sh);
-	if (handled < 0)
-		return (-1);
-	if (handled > 0)
-		return (0);
-	*result = join_and_free(*result, &chunk[*index]);
-	if (!*result)
-		return (-1);
-	(*index)++;
+	if (chunk[*index] == '$' && chunk[*index + 1] == '?')
+		return (append_status_expansion(result, index, sh));
+	else if (chunk[*index] == '$' && is_valid_var_head(chunk[*index + 1]))
+		return (append_env_expansion(result, chunk, index, sh));
+	else
+	{
+		buf[0] = chunk[*index];
+		buf[1] = '\0';
+		*result = join_and_free(*result, buf);
+		if (!*result)
+			return (-1);
+		(*index)++;
+	}
 	return (0);
 }
 

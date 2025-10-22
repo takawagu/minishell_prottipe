@@ -6,7 +6,7 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 19:17:39 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/17 16:38:01 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/10/22 19:38:05 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ static char	*dup_token_arg(const t_token *token)
 		return (ft_strdup(token->args));
 	return (ft_strdup(""));
 }
+
 static void	append_redir(t_redir **head, t_redir *redir)
 {
 	t_redir	**tail;
@@ -72,7 +73,7 @@ int	push_redir(t_cmd *cmd, const t_token *redir_tok, const t_token *word_tok)
 	new_redir->arg = dup_token_arg(word_tok);
 	if (!new_redir->arg)
 		return (free(new_redir), -1);
-	new_redir->word_info = clone_wordinfo(&word_tok->word_info);
+	new_redir->word_info = dup_wordinfo(&word_tok->word_info);
 	if (!new_redir->word_info)
 		return (free(new_redir->arg), free(new_redir), -1);
 	init_redir_fields(new_redir, kind, redir_tok);

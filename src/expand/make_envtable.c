@@ -6,11 +6,30 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/15 16:15:23 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/20 14:17:57 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/10/22 17:37:08 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
+
+void	free_env_list(t_env **head)
+{
+	t_env	*cur;
+	t_env	*next;
+
+	if (!head)
+		return ;
+	cur = *head;
+	while (cur)
+	{
+		next = cur->next;
+		free(cur->key);
+		free(cur->val);
+		free(cur);
+		cur = next;
+	}
+	*head = NULL;
+}
 
 static char	*ft_strndup(const char *str, size_t n)
 {

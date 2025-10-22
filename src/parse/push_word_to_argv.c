@@ -6,7 +6,7 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/13 14:02:11 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/17 15:59:38 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/10/22 15:40:17 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,12 +75,12 @@ int	push_word_to_argv(t_cmd *cmd, const t_token *token)
 		return (-1);
 	old_argv = cmd->argv;
 	old_argv_len = old_argv_length(old_argv);
-	if (grow_argv_with_word(cmd, word, old_argv_len) != 0
-		|| append_wordinfo(cmd, &token->word_info) != 0)
+	if (grow_argv_with_word(cmd, word, old_argv_len) != 0)
 	{
 		free(word);
 		return (-1);
 	}
-	cmd->argc++;
+	if (push_word_info(cmd, token) != 0)
+		return (-1);
 	return (0);
 }
