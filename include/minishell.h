@@ -11,6 +11,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <sys/select.h>
+# include <sys/stat.h>
 # include <sys/types.h>
 # include <sys/wait.h>
 # include <unistd.h>
@@ -241,5 +242,7 @@ int							build_pipeline_cmds(const t_ast *root,
 // error
 int							return_laststatus(t_shell *sh, int error_code);
 int							status_to_exitcode(int wstatus);
+void						cmd_not_found_exit(const char *cmd);
+void						permission_denied_exit(const char *target);
 
 #endif

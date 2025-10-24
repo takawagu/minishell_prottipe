@@ -6,7 +6,7 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/09/30 14:24:15 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/22 19:59:43 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/10/24 14:40:47 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,20 +15,20 @@
 static int	setup_pipeline_exec(const t_ast *root, t_cmd ***out_seq,
 		size_t *out_n, t_shell *sh)
 {
-	t_cmd	**pipeline_cmds;
+	t_cmd	**pipe_cmds;
 	size_t	count_cmds;
 
-	pipeline_cmds = NULL;
+	pipe_cmds = NULL;
 	count_cmds = 0;
 	*out_seq = NULL;
 	*out_n = 0;
 	if (!root)
 		return (return_laststatus(sh, 0));
-	if (build_pipeline_cmds(root, &pipeline_cmds, &count_cmds, sh) != 0)
+	if (build_pipeline_cmds(root, &pipe_cmds, &count_cmds, sh) != 0)
 		return (sh->last_status);
-	if (prepare_all_heredocs(pipeline_cmds, count_cmds, sh) != 0)
-		pipe_cmds_cleanup_and_return(pipeline_cmds, sh);
-	*out_seq = pipeline_cmds;
+	if (prepare_all_heredocs(pipe_cmds, count_cmds, sh) != 0)
+		return (pipe_cmds_cleanup_and_return(pipe_cmds, sh));
+	*out_seq = pipe_cmds;
 	*out_n = count_cmds;
 	return (0);
 }
@@ -64,20 +64,20 @@ static int	run_pipeline_loop(t_cmd **pipe_cmds, size_t count_cmds,
 
 int	run_pipeline(const t_ast *root, t_shell *sh)
 {
-	t_cmd		**pipeline_cmds;
+	t_cmd		**pipe_cmds;
 	size_t		n;
 	t_pipe_ctx	pipe_ctx;
 
-	pipeline_cmds = NULL;
+	pipe_cmds = NULL;
 	n = 0;
-	if (setup_pipeline_exec(root, &pipeline_cmds, &n, sh) != 0)
+	if (setup_pipeline_exec(root, &pipe_cmds, &n, sh) != 0)
 		return (sh->last_status);
 	pipe_ctx_init(&pipe_ctx);
-	if (run_pipeline_loop(pipeline_cmds, n, &pipe_ctx, sh) != 0)
+	if (run_pipeline_loop(pipe_cmds, n, &pipe_ctx, sh) != 0)
 		return (sh->last_status);
-	close_hdocs_in_pipeline(pipeline_cmds, n);
+	close_hdocs_in_pipeline(pipe_cmds, n);
 	if (reap_pipeline_and_set_last_status(pipe_ctx.last_pid, sh) < 0)
 		sh->last_status = 1;
-	free(pipeline_cmds);
+	free(pipe_cmds);
 	return (sh->last_status);
 }

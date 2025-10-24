@@ -6,7 +6,7 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/03 14:21:40 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/22 19:49:10 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/10/24 14:59:38 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,4 @@ void	run_pipeline_child(t_pipe_ctx *pipe_ctx, t_cmd **pipeline_cmds,
 	// 	exit(st & 0xFF);
 	// }
 	exec_external(pipeline_cmds[i]->argv, sh);
-	if (errno == ENOENT)
-		exit(127);
-	exit(126);
 }
