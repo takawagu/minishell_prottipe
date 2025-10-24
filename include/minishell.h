@@ -129,9 +129,9 @@ typedef struct s_ast
 //環境変数のテーブル
 typedef struct s_env
 {
-	char *key; // malloc所有
-	char *val; // malloc所有（NULL許可するなら要注意）
-	unsigned exported : 1;
+	char *key;    // malloc所有
+	char *val;    // malloc所有（NULL許可するなら要注意）
+	int exported; // 0/1（print時はexportedなものを表示）
 	struct s_env			*next;
 }							t_env;
 
@@ -244,5 +244,10 @@ int							return_laststatus(t_shell *sh, int error_code);
 int							status_to_exitcode(int wstatus);
 void						cmd_not_found_exit(const char *cmd);
 void						permission_denied_exit(const char *target);
+
+// builtin
+int							builtin_export(char **argv, t_env **penv);
+int							handle_export_arg(char *arg, t_env **penv);
+void						print_export_sorted(const t_env *env);
 
 #endif
