@@ -270,4 +270,7 @@ int							builtin_pwd(char **argv);
 int							builtin_unset(char **argv, t_env **penv);
 int							is_valid_identifier(const char *s);
 
+int heredoc_loop(int wfd, t_redir *r, t_shell *sh);
+
+
 #endif

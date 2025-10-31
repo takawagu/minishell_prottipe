@@ -1,0 +1,25 @@
+{
+  "name": "Ubuntu Dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      // Linuxホストのときにファイル権限を合わせたい場合のみ利用
+      "USER_UID": "${localEnv:UID}",
+      "USER_GID": "${localEnv:GID}"
+    }
+  },
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-azuretools.vscode-docker",
+        "ms-vscode.makefile-tools",
+        "ms-vscode.cpptools-extension-pack"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "postCreateCommand": "sudo apt-get update -y && sudo apt-get install -y git"
+}
