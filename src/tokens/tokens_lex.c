@@ -6,26 +6,42 @@
 /*   By: keitabe <keitabe@student.42tokyo.jp>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/15 11:24:10 by keitabe           #+#    #+#             */
-/*   Updated: 2025/10/16 14:49:55 by keitabe          ###   ########.fr       */
+/*   Updated: 2025/11/05 15:05:59 by keitabe          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "tokens.h"
+
+static int	lex_open_quote(t_lexctx *cx, t_quote_kind qk)
+{
+	int	rc;
+
+	rc = lex_enter_quote(qk, &cx->wb, &cx->st);
+	if (rc != TOK_OK)
+		return (rc);
+	cx->i++;
+	return (TOK_OK);
+}
 
 static int	lex_step_normal(t_lexctx *cx)
 {
 	int	rc;
 
 	if (is_space_tab(cx->s[cx->i]))
+	{
 		rc = lex_handle_space_or_end(&cx->wb, cx->out);
+		if (rc != TOK_OK)
+			return (rc);
+		cx->i++;
+		return (TOK_OK);
+	}
 	else if (cx->s[cx->i] == '|' || cx->s[cx->i] == '<' || cx->s[cx->i] == '>')
-		rc = lex_handle_operator(cx->s, &cx->i, &cx->wb, cx->out);
+		return (lex_handle_operator(cx->s, &cx->i, &cx->wb, cx->out));
 	else if (cx->s[cx->i] == '\'')
-		rc = lex_enter_quote(SINGLE, &cx->wb, &cx->st);
+		return (lex_open_quote(cx, SINGLE));
 	else if (cx->s[cx->i] == '"')
-		rc = lex_enter_quote(DOUBLE, &cx->wb, &cx->st);
-	else
-		rc = lex_handle_char(cx->s[cx->i], cx->st, &cx->wb);
+		return (lex_open_quote(cx, DOUBLE));
+	rc = lex_handle_char(cx->s[cx->i], cx->st, &cx->wb);
 	if (rc != TOK_OK)
 		return (rc);
 	cx->i++;
@@ -83,6 +99,7 @@ int	tok_lex_line(const char *s, t_tokvec *out, int *err)
 	cx.i = 0;
 	cx.st = LXS_NORMAL;
 	cx.out = out;
+	tokvec_init(out);
 	wb_init(&cx.wb);
 	rc = lex_run(&cx);
 	if (rc == TOK_OK && cx.st == LXS_IN_SQ)

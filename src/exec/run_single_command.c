@@ -6,18 +6,12 @@
 /*   By: takawagu <takawagu@student.42tokyo.jp>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/10/04 14:06:06 by takawagu          #+#    #+#             */
-/*   Updated: 2025/10/27 15:23:04 by takawagu         ###   ########.fr       */
+/*   Updated: 2025/11/08 18:04:37 by takawagu         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
-
-static void	exec_child_single(t_cmd *cmd, t_shell *sh)
-{
-	if (apply_redirs(cmd) < 0)
-		exit(1);
-	exec_external(cmd->argv, sh);
-}
+#include "signals.h"
 
 static int	wait_child_and_set_status(pid_t pid, t_shell *sh)
 {
@@ -28,30 +22,70 @@ static int	wait_child_and_set_status(pid_t pid, t_shell *sh)
 		if (errno == EINTR)
 			continue ;
 		perror("waitpid");
-		return (sh->last_status = 1);
+		sh->last_status = 1;
+		return (sh->last_status);
 	}
-	return (sh->last_status = status_to_exitcode(status));
+	sh->last_status = status_to_exitcode(status);
+	return (sh->last_status);
+}
+
+static int	pre_single_command(t_cmd *cmd, t_shell *sh)
+{
+	if (!cmd || ((!cmd->argv || !cmd->argv[0]) && cmd->redirs == NULL))
+	{
+		sh->last_status = 1;
+		return (1);
+	}
+	if (prepare_cmd_heredocs(cmd, sh, NULL) != 0)
+	{
+		close_hdocs_in_cmd(cmd);
+		return (1);
+	}
+	return (0);
+}
+
+static int	handle_fork_failure(t_cmd *cmd, t_shell *sh)
+{
+	perror("fork");
+	sig_setup_readline();
+	close_hdocs_in_cmd(cmd);
+	sh->last_status = 1;
+	return (sh->last_status);
+}
+
+static int	exec_builtin_parent(t_cmd *cmd, t_shell *sh)
+{
+	t_fd_backup	*backups;
+	size_t		len;
+
+	if (setup_builtin_redirects(cmd, &backups, &len) < 0)
+	{
+		close_hdocs_in_cmd(cmd);
+		sh->last_status = 1;
+		return (sh->last_status);
+	}
+	sh->last_status = exec_builtin(cmd, &sh->env);
+	restore_builtin_redirects(backups, len);
+	close_hdocs_in_cmd(cmd);
+	return (sh->last_status);
 }
 
 int	run_single_command(t_cmd *cmd, t_shell *sh)
 {
 	pid_t	pid;
 
-	if (!cmd || !cmd->argv || !cmd->argv[0])
-		return (sh->last_status = 1);
-	if (prepare_cmd_heredocs(cmd, sh, NULL) != 0)
-		return (close_hdocs_in_cmd(cmd), sh->last_status);
+	if (pre_single_command(cmd, sh))
+		return (sh->last_status);
 	if (cmd->is_builtin)
-	{
-		close_hdocs_in_cmd(cmd);
-		return (sh->last_status = exec_builtin(cmd, &sh->env));
-	}
+		return (exec_builtin_parent(cmd, sh));
+	sig_setup_parent_wait();
 	pid = fork();
 	if (pid < 0)
-		return (perror("fork"), close_hdocs_in_cmd(cmd), sh->last_status = 1);
+		return (handle_fork_failure(cmd, sh));
 	if (pid == 0)
 		exec_child_single(cmd, sh);
 	wait_child_and_set_status(pid, sh);
+	sig_setup_readline();
 	close_hdocs_in_cmd(cmd);
 	return (sh->last_status);
 }
